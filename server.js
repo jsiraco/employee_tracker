@@ -15,27 +15,11 @@ const db = mysql.createConnection(
   {
     host: "localhost",
     user: "root",
-    password: "frootboot",
+    password: "Toadally222000Awesome41968!?",
     database: "cli_db"
   },
   console.log(`Connected to the cli_db database.`)
 );
-
-// View all departments 
-app.get("/api/departments", (req, res) => {
-  const sql = `SELECT * FROM department`;
-
-  db.query(sql, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json({
-      message: "success",
-      data: rows
-    });
-  });
-});
 
 const cliFunc = () => {
   inquirer
@@ -60,20 +44,43 @@ const cliFunc = () => {
       switch (choices.choices) {
         case "View all departments":
           //console.log("Test");
-          const sql = `SELECT * FROM department`;
-          db.query(sql, (err, rows) => {
+          const deptSQL = `SELECT * FROM department`;
+          db.query(deptSQL, (err, rows) => {
             if (err) {
               console.log({ error: err.message });
               return;
             }
-            //console.log(rows);
             console.table([...rows]);
-            return;
+            cliFunc();
           });
           break;
         case "View all roles":
+          const roleSQL = `SELECT * FROM role INNER JOIN department ON role.department_id = department.id;`;
+          db.query(roleSQL, (err, rows) => {
+            if (err) {
+              console.log({ error: err.message });
+              return;
+            }
+            console.table([...rows]);
+            cliFunc();
+          });
           break;
         case "View all employees":
+          const employeeSQL =
+            `SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.department_name
+          FROM employee
+          JOIN role 
+          ON employee.role_id = role.id
+          JOIN department 
+          ON role.department_id = department.id;`;
+          db.query(employeeSQL, (err, rows) => {
+            if (err) {
+              console.log({ error: err.message });
+              return;
+            }
+            console.table([...rows]);
+            cliFunc();
+          });
           break;
         case "Add a department":
           break;
@@ -84,6 +91,7 @@ const cliFunc = () => {
         case "Update an employee role":
           break;
         case "Exit":
+          console.log("Thank you!");
           return;
       }
     }).catch((error) => {
@@ -179,7 +187,4 @@ app.post('/api/new-employee', (req, res) => {
   });
 });
 
-// Listening 
-// app.listen(PORT, () => {
-//   console.log(`Server running on port ${PORT}`);
-// });
+cliFunc();
