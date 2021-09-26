@@ -21,6 +21,92 @@ const db = mysql.createConnection(
   console.log(`Connected to the cli_db database.`)
 );
 
+// Validates user input
+const customValidation = (value) => {
+  const regex = /[a-z]/g;
+  regex.test(value);
+
+}
+
+//Cleans the user input
+const firstLetterUpper = (data) => {
+  const newEntry = data.department;
+  const newEntryclean = newEntry.toLowerCase();
+  const newEntryFormat = newEntryclean.charAt(0).toUpperCase() + newEntryclean.slice(1);
+  return newEntryFormat;
+}
+
+// function that return the list of departments
+const departmentList = () => {
+  db.query(`SELECT department_name FROM department`, (err, rows) => {
+    if (err) {
+      console.log({ error: err.message });
+      return;
+    }
+    const departmentList = [];
+    departmentList.push(...rows);
+    return departmentList;
+  });
+}
+
+// Function for adding a department into the database
+const addDept = () => {
+  inquirer.prompt([
+    {
+      type: "input",
+      name: "department",
+      message: "Please enter the department to add",
+      //validate: value => customValidation(value)
+    }
+  ]).then((data) => {
+    // Cleans the input to be put in the database
+    const department = firstLetterUpper(data);
+    // SQL query to add the department to the database
+    const addDepartmentSQL = `INSERT INTO department (department_name) VALUES (?);`
+    db.query(addDepartmentSQL, department, (err, result) => {
+      if (err) {
+        console.log(err);
+      } console.log(`Successfully added ${department} to the database \n`);
+      cliFunc();
+    });
+  });
+}
+
+const addRole = () => {
+  inquirer.prompt([
+    {
+      type: "input",
+      name: "title",
+      message: "Please enter the role to add",
+    },
+    {
+      type: "input",
+      name: "salary",
+      message: "Please enter the salary",
+    },
+    {
+      type: "list",
+      name: "department",
+      choices: departmentList(),
+    }
+  ]).then((data) => {
+    const department_id = data.department[0];
+    const completeRole = [];
+    completeRole.push(data.title, data.salary, department_id);
+    const addRoleSQL = `INSERT INTO roles (title, salary, department_id) VALUES (?);`
+
+    db.query(addRoleSQL, completeRole, (err, result) => {
+      if (err) {
+        console.log(err);
+      } console.log(`Successfully added ${data.department[1]} to the database \n`);
+      cliFunc();
+    });
+
+  });
+}
+
+
+
 const cliFunc = () => {
   inquirer
     .prompt([
@@ -44,7 +130,8 @@ const cliFunc = () => {
       switch (choices.choices) {
         case "View all departments":
           //console.log("Test");
-          const deptSQL = `SELECT * FROM department`;
+          const deptSQL =
+            `SELECT * FROM department`;
           db.query(deptSQL, (err, rows) => {
             if (err) {
               console.log({ error: err.message });
@@ -55,7 +142,9 @@ const cliFunc = () => {
           });
           break;
         case "View all roles":
-          const roleSQL = `SELECT * FROM role INNER JOIN department ON role.department_id = department.id;`;
+          const roleSQL =
+            `SELECT role.id, role.title, role.salary, department.department_name 
+          FROM role INNER JOIN department ON role.department_id = department.id;`;
           db.query(roleSQL, (err, rows) => {
             if (err) {
               console.log({ error: err.message });
@@ -83,8 +172,10 @@ const cliFunc = () => {
           });
           break;
         case "Add a department":
+          addDept();
           break;
         case "Add a role":
+          addRole();
           break;
         case "Add an employee":
           break;

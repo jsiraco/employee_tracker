@@ -16,6 +16,12 @@ ON role.department_id = department.id;
 
 -- Need to get manager_id working to display the managers name
 
-INSERT INTO department (id, department_name)
+-- Add department
+INSERT INTO department (department_name)
 VALUES 
-	(5, "Outreach");
+	("Custodial");
+
+
+INSERT INTO roles (title, salary, department_id)
+VALUES 
+	("Janitor", 80000, 7);
