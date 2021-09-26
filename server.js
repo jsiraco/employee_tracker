@@ -3,7 +3,6 @@ const mysql = require("mysql2");
 const inquirer = require("inquirer");
 const cTable = require("console.table");
 
-const PORT = process.env.PORT || 3001;
 const app = express();
 
 // Express middleware
@@ -45,6 +44,7 @@ const departmentList = () => {
     }
     const departmentList = [];
     departmentList.push(...rows);
+    console.log(departmentList);
     return departmentList;
   });
 }
@@ -70,9 +70,12 @@ const addDept = () => {
       cliFunc();
     });
   });
-}
+};
 
 const addRole = () => {
+  let departmentArray = []
+  departmentArray.push(departmentList());
+
   inquirer.prompt([
     {
       type: "input",
@@ -87,7 +90,7 @@ const addRole = () => {
     {
       type: "list",
       name: "department",
-      choices: departmentList(),
+      choices: departmentArray,
     }
   ]).then((data) => {
     const department_id = data.department[0];
@@ -208,57 +211,6 @@ app.get("/api/roles", (req, res) => {
   });
 });
 
-// View all employees
-app.get("/api/employees", (req, res) => {
-  const sql = `SELECT * FROM employee`
-
-  db.query(sql, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json({
-      message: "success",
-      data: rows
-    });
-  });
-});
-
-// Add department
-app.post('/api/new-department', (req, res) => {
-  const sql = `INSERT INTO department (id, department_name)
-      VALUES (?)`;
-  const params = [req.id, req.department_name];
-
-  db.query(sql, params, (err, result) => {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-    res.json({
-      message: 'success',
-      data: req
-    });
-  });
-});
-
-// Add role
-app.post('/api/new-role', (req, res) => {
-  const sql = `INSERT INTO department (id, title, salary, department_id)
-      VALUES (?)`;
-  const params = [req.id, req.title, req.salary, req.department_id];
-
-  db.query(sql, params, (err, result) => {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    }
-    res.json({
-      message: 'success',
-      data: req
-    });
-  });
-});
 
 // Add employee
 app.post('/api/new-employee', (req, res) => {
