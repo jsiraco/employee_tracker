@@ -10,24 +10,29 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 // Connect to database
-  const db = mysql.createConnection(
-    {
-      host: "localhost",
-      user: "root",
-      password: "Toadally222000Awesome41968!?",
-      database: "cli_db"
-    },
-    console.log(`Connected to the cli_db database.`)
-  );
+const db = mysql.createConnection(
+  {
+    host: "localhost",
+    user: "root",
+    password: "frootboot",
+    database: "cli_db"
+  },
+  console.log(`Connected to the cli_db database.`)
+);
 
 // Validates user input
-const customValidation = (value) => {
+const customLetterValidation = (value) => {
   const regex = /[a-z]/g;
   regex.test(value);
+};
 
-}
+// Validates the number input
+const customNumberValidation = (value) => {
+  const regex = /[0-9]/g;
+  regex.test(value);
+};
 
-//Cleans the user input
+//Cleans the user input and formats it
 const firstLetterUpper = (data) => {
   const newEntry = data.department;
   const newEntryclean = newEntry.toLowerCase();
@@ -72,6 +77,7 @@ const addDept = () => {
   });
 };
 
+// Function for adding a role to the database
 const addRole = () => {
   inquirer.prompt([
     {
@@ -92,7 +98,7 @@ const addRole = () => {
   ]).then((data) => {
 
     const department_id = (data) => {
-      switch (data.department) {
+      switch (data) {
         case "Sales":
           return 1;
         case "Engineering":
@@ -101,105 +107,120 @@ const addRole = () => {
           return 3;
         case "Legal":
           return 4;
+      };
     };
-  };
 
-    const addRoleSQL = `INSERT INTO role (title, salary, department_id) VALUES ("${data.title}", ${data.salary}, ${department_id(data.department)});`
+    const cleanRole = firstLetterUpper(data.title);
+    const addRoleSQL = `INSERT INTO role (title, salary, department_id) VALUES ("${cleanRole}", ${data.salary}, ${department_id(data.department)});`
 
     db.query(addRoleSQL, (err, result) => {
       if (err) {
         console.log(err);
-      } console.log(`Successfully added ${data.title} to the database \n`);
+      } console.log(`Successfully added ${cleanRole} to the database \n`);
       cliFunc();
     });
 
   });
-}
+};
+
+// Function for adding an employee to the database
+const addEmployee = () => {
+  inquirer.prompt([
+    {
+      type: "input",
+      name: "firstName",
+      message: "Please enter the employee's first name"
+    },
+    {
+      type: "input",
+      name: "lastName",
+      message: "Please enter the employee's last name"
+    },
+  ]);
+};
 
 
-
+//Starts the CLI application
 const cliFunc = () => {
-  inquirer
-    .prompt([
-      {
-        type: "list",
-        name: "choices",
-        message: "Which would you like to do?",
-        choices:
-          [
-            "View all departments",
-            "View all roles",
-            "View all employees",
-            "Add a department",
-            "Add a role",
-            "Add an employee",
-            "Update an employee role",
-            "Exit"
-          ]
-      }
-    ]).then((choices) => {
-      switch (choices.choices) {
-        case "View all departments":
-          //console.log("Test");
-          const deptSQL =
-            `SELECT * FROM department`;
-          db.query(deptSQL, (err, rows) => {
-            if (err) {
-              console.log({ error: err.message });
-              return;
-            }
-            console.table([...rows]);
-            cliFunc();
-          });
-          break;
-        case "View all roles":
-          const roleSQL =
-            `SELECT role.id, role.title, role.salary, department.department_name 
+  inquirer.prompt([
+    {
+      type: "list",
+      name: "choices",
+      message: "Which would you like to do?",
+      choices:
+        [
+          "View all departments",
+          "View all roles",
+          "View all employees",
+          "Add a department",
+          "Add a role",
+          "Add an employee",
+          "Update an employee role",
+          "Exit"
+        ]
+    }
+  ]).then((choices) => {
+    switch (choices.choices) {
+      case "View all departments":
+        const deptSQL =
+          `SELECT * FROM department`;
+        db.query(deptSQL, (err, rows) => {
+          if (err) {
+            console.log({ error: err.message });
+            return;
+          }
+          console.table([...rows]);
+          cliFunc();
+        });
+        break;
+      case "View all roles":
+        const roleSQL =
+          `SELECT role.id, role.title, role.salary, department.department_name 
           FROM role INNER JOIN department ON role.department_id = department.id;`;
-          db.query(roleSQL, (err, rows) => {
-            if (err) {
-              console.log({ error: err.message });
-              return;
-            }
-            console.table([...rows]);
-            cliFunc();
-          });
-          break;
-        case "View all employees":
-          const employeeSQL =
-            `SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.department_name
+        db.query(roleSQL, (err, rows) => {
+          if (err) {
+            console.log({ error: err.message });
+            return;
+          }
+          console.table([...rows]);
+          cliFunc();
+        });
+        break;
+      case "View all employees":
+        const employeeSQL =
+          `SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.department_name
           FROM employee
           JOIN role 
           ON employee.role_id = role.id
           JOIN department 
           ON role.department_id = department.id;`;
-          db.query(employeeSQL, (err, rows) => {
-            if (err) {
-              console.log({ error: err.message });
-              return;
-            }
-            console.table([...rows]);
-            cliFunc();
-          });
-          break;
-        case "Add a department":
-          addDept();
-          break;
-        case "Add a role":
-          addRole();
-          break;
-        case "Add an employee":
-          break;
-        case "Update an employee role":
-          break;
-        case "Exit":
-          console.log("Thank you!");
-          return;
-      }
-    }).catch((error) => {
-      console.log(error);
-      return;
-    })
+        db.query(employeeSQL, (err, rows) => {
+          if (err) {
+            console.log({ error: err.message });
+            return;
+          }
+          console.table([...rows]);
+          cliFunc();
+        });
+        break;
+      case "Add a department":
+        addDept();
+        break;
+      case "Add a role":
+        addRole();
+        break;
+      case "Add an employee":
+        break;
+      case "Update an employee role":
+        break;
+      case "Exit":
+        console.log("You may now close the application");
+        return;
+    }
+  }).catch((error) => {
+    console.log(error);
+    return;
+  })
 }
 
 // View all roles
