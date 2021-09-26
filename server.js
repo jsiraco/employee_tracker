@@ -10,15 +10,15 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 // Connect to database
-const db = mysql.createConnection(
-  {
-    host: "localhost",
-    user: "root",
-    password: "Toadally222000Awesome41968!?",
-    database: "cli_db"
-  },
-  console.log(`Connected to the cli_db database.`)
-);
+  const db = mysql.createConnection(
+    {
+      host: "localhost",
+      user: "root",
+      password: "Toadally222000Awesome41968!?",
+      database: "cli_db"
+    },
+    console.log(`Connected to the cli_db database.`)
+  );
 
 // Validates user input
 const customValidation = (value) => {
@@ -73,9 +73,6 @@ const addDept = () => {
 };
 
 const addRole = () => {
-  let departmentArray = []
-  departmentArray.push(departmentList());
-
   inquirer.prompt([
     {
       type: "input",
@@ -90,18 +87,29 @@ const addRole = () => {
     {
       type: "list",
       name: "department",
-      choices: departmentArray,
+      choices: ["Sales", "Engineering", "Finance", "Legal"],
     }
   ]).then((data) => {
-    const department_id = data.department[0];
-    const completeRole = [];
-    completeRole.push(data.title, data.salary, department_id);
-    const addRoleSQL = `INSERT INTO roles (title, salary, department_id) VALUES (?);`
 
-    db.query(addRoleSQL, completeRole, (err, result) => {
+    const department_id = (data) => {
+      switch (data.department) {
+        case "Sales":
+          return 1;
+        case "Engineering":
+          return 2;
+        case "Finance":
+          return 3;
+        case "Legal":
+          return 4;
+    };
+  };
+
+    const addRoleSQL = `INSERT INTO role (title, salary, department_id) VALUES ("${data.title}", ${data.salary}, ${department_id(data.department)});`
+
+    db.query(addRoleSQL, (err, result) => {
       if (err) {
         console.log(err);
-      } console.log(`Successfully added ${data.department[1]} to the database \n`);
+      } console.log(`Successfully added ${data.title} to the database \n`);
       cliFunc();
     });
 

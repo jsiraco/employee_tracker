@@ -22,6 +22,6 @@ VALUES
 	("Custodial");
 
 
-INSERT INTO roles (title, salary, department_id)
+INSERT INTO role (title, salary, department_id)
 VALUES 
-	("Janitor", 80000, 7);
+	("Executioner", 80000, 7);
