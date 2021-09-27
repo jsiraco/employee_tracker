@@ -7,14 +7,6 @@ FROM role
 INNER JOIN department ON role.department_id = department.id;
 
 -- Employee
-SELECT employee.id, employee.first_name, employee.last_name, role.title, role.salary, department.department_name
-FROM employee
-JOIN role 
-ON employee.role_id = role.id
-JOIN department 
-ON role.department_id = department.id;
-
--- Employee
 SELECT employee.id, employee.first_name, employee.last_name, CONCAT(manager.first_name,' ',manager.last_name) AS manager, 
 role.title, role.salary, department.department_name 
 FROM employee 
@@ -24,8 +16,6 @@ LEFT JOIN employee manager ON manager.id = employee.manager_id;
 
 -- Role Titles
 SELECT title FROM role;
-
--- Need to get manager_id working to display the managers name
 
 -- Add department
 INSERT INTO department (department_name)
@@ -41,3 +31,6 @@ VALUES
 INSERT INTO employee (first_name, last_name, role_id, manager_id)
 VALUES
 	("Maru", "Wade", 3, 1);
+
+-- Update Employee
+UPDATE employee SET role_id = 1 WHERE id = 9;

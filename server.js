@@ -22,15 +22,68 @@ const db = mysql.createConnection(
 
 // Validates user input
 const customLetterValidation = (value) => {
-  const regex = /[a-z]/g;
-  regex.test(value);
+  const regex = /[a-z]/gi;
+  if (!regex.test(value)) {
+    return "Please use letters only"
+  };
 };
 
-// Validates the number input
-const customNumberValidation = (value) => {
-  const regex = /[0-9]/g;
-  regex.test(value);
-};
+
+//Cleans the user inputs
+const cleanedName = (name) => {
+  const toLower = name.toLowerCase();
+  const toFormat = toLower.charAt(0).toUpperCase() + toLower.slice(1);
+  return toFormat;
+}
+
+// View all departments
+const departmentView = () => {
+  const deptSQL =
+    `SELECT * FROM department`;
+  db.query(deptSQL, (err, rows) => {
+    if (err) {
+      console.log({ error: err.message });
+      return;
+    }
+    console.table([...rows]);
+    cliFunc();
+  });
+}
+
+// View all roles
+const roleView = () => {
+  const roleSQL =
+    `SELECT role.id, role.title, role.salary, department.department_name 
+          FROM role 
+          INNER JOIN department ON role.department_id = department.id;`;
+  db.query(roleSQL, (err, rows) => {
+    if (err) {
+      console.log({ error: err.message });
+      return;
+    }
+    console.table([...rows]);
+    cliFunc();
+  });
+}
+
+// View all employees
+const employeeView = () => {
+  const employeeSQL =
+    `SELECT employee.id, employee.first_name, employee.last_name, 
+          CONCAT(manager.first_name,' ',manager.last_name) AS manager, role.title, role.salary, department.department_name 
+          FROM employee 
+          JOIN role ON role.id = employee.role_id 
+          JOIN department ON department.id = role.department_id 
+          LEFT JOIN employee manager ON manager.id = employee.manager_id;`;
+  db.query(employeeSQL, (err, rows) => {
+    if (err) {
+      console.log({ error: err.message });
+      return;
+    }
+    console.table([...rows]);
+    cliFunc();
+  });
+}
 
 // Function for adding a department into the database
 const addDept = () => {
@@ -39,17 +92,18 @@ const addDept = () => {
       type: "input",
       name: "department",
       message: "Please enter the department to add",
-      //validate: value => customValidation(value)
+      validate: val => customLetterValidation(val),
     }
   ]).then((data) => {
+    const { department } = data;
     // Cleans the input to be put in the database
-    const department = firstLetterUpper(data);
+    const cleanDepartment = cleanedName(department);
     // SQL query to add the department to the database
     const addDepartmentSQL = `INSERT INTO department (department_name) VALUES (?);`
-    db.query(addDepartmentSQL, department, (err, result) => {
+    db.query(addDepartmentSQL, cleanDepartment, (err, result) => {
       if (err) {
         console.log(err);
-      } console.log(`Successfully added ${department} to the database \n`);
+      } console.log(`Successfully added ${cleanDepartment} to the database \n`);
       cliFunc();
     });
   });
@@ -66,12 +120,13 @@ const addRole = () => {
     rows.forEach((department) => {
       departmentArray.push(department.department_name);
     });
-
+ 
     inquirer.prompt([
       {
         type: "input",
         name: "title",
         message: "Please enter the role to add",
+        validate: val => customLetterValidation(val),
       },
       {
         type: "number",
@@ -87,15 +142,14 @@ const addRole = () => {
       const { title, salary, department } = data;
 
       const departmentId = departmentArray.indexOf(department) + 1;
-      const titleClean = title.toLowerCase();
-      const titleFormat = titleClean.charAt(0).toUpperCase() + titleClean.slice(1);
+      const cleanTitle = cleanedName(title);
 
-      const addRoleSQL = `INSERT INTO role (title, salary, department_id) VALUES ("${titleFormat}", ${salary}, ${departmentId});`
+      const addRoleSQL = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?);`
 
-      db.query(addRoleSQL, (err, result) => {
+      db.query(addRoleSQL, [cleanTitle, salary, departmentId], (err, result) => {
         if (err) {
           console.log(err);
-        } console.log(`Successfully added ${titleFormat} to the database \n`);
+        } console.log(`Successfully added ${cleanTitle} to the database \n`);
         cliFunc();
       });
 
@@ -124,12 +178,14 @@ const addEmployee = () => {
         {
           type: "input",
           name: "firstName",
-          message: "Please enter the employee's first name"
+          message: "Please enter the employee's first name",
+          validate: val => customLetterValidation(val),
         },
         {
           type: "input",
           name: "lastName",
-          message: "Please enter the employee's last name"
+          message: "Please enter the employee's last name",
+          validate: val => customLetterValidation(val),
         },
         {
           type: "list",
@@ -148,24 +204,69 @@ const addEmployee = () => {
 
         const roleId = roleArray.indexOf(role) + 1;
         const managerId = employeeArray.indexOf(manager) + 1;
+        
+        const cleanFirst = cleanedName(firstName);
+        const cleanLast = cleanedName(lastName);
 
-        const cleanedName = (name) => {
-          const toLower = name.toLowerCase();
-          const toFormat = toLower.charAt(0).toUpperCase() + toLower.slice(1);
-          return toFormat;
-        }
+        const addEmployeeSql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);`
 
-        const addEmployeeSql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${firstName}", "${lastName}", ${roleId}, ${managerId});`
-
-        db.query(addEmployeeSql, (err, result) => {
+        db.query(addEmployeeSql, [cleanFirst, cleanLast, roleId, managerId], (err, result) => {
           if (err) {
             console.log(err);
-          } console.log(`Successfully added ${firstName} ${lastName} to the database \n`);
+          } console.log(`Successfully added ${cleanFirst} ${cleanLast} to the database \n`);
           cliFunc();
         });
       });
     });
 };
+
+// Updates an employee
+const updateEmployee = () => {
+  db.query("SELECT employee.id, employee.first_name, employee.last_name, CONCAT(manager.first_name,' ',manager.last_name) AS manager, role.title, role.salary, department.department_name FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id LEFT JOIN employee manager ON manager.id = employee.manager_id;",
+    (err, rows) => {
+      if (err) {
+        console.log({ error: err.message });
+        return;
+      }
+      let employeeArray = [];
+      let roleArray = [];
+      rows.forEach((employee) => {
+        employeeArray.push(`${employee.first_name} ${employee.last_name}`);
+      });
+      rows.forEach((role) => {
+        roleArray.push(role.title);
+      })
+
+      inquirer.prompt([
+        {
+          type: "list",
+          name: "employee",
+          message: "Please select this employee to edit",
+          choices: employeeArray,
+        },
+        {
+          type: "list",
+          name: "role",
+          message: "Please choose this employee's role",
+          choices: roleArray
+        }
+      ]).then((data) => {
+        const { employee, role } = data;
+
+        const roleId = roleArray.indexOf(role) + 1;
+        const employeeId = employeeArray.indexOf(employee) + 1;
+
+        const updateEmployeeSql = `UPDATE employee SET role_id = ? WHERE id = ?;`
+
+        db.query(updateEmployeeSql, [roleId, employeeId], (err, result) => {
+          if (err) {
+            console.log(err);
+          } console.log(`Successfully updated ${employee}\n`);
+          cliFunc();
+        });
+      });
+    });
+}
 
 
 //Starts the CLI application
@@ -190,47 +291,13 @@ const cliFunc = () => {
   ]).then((choices) => {
     switch (choices.choices) {
       case "View all departments":
-        const deptSQL =
-          `SELECT * FROM department`;
-        db.query(deptSQL, (err, rows) => {
-          if (err) {
-            console.log({ error: err.message });
-            return;
-          }
-          console.table([...rows]);
-          cliFunc();
-        });
+        departmentView();
         break;
       case "View all roles":
-        const roleSQL =
-          `SELECT role.id, role.title, role.salary, department.department_name 
-          FROM role 
-          INNER JOIN department ON role.department_id = department.id;`;
-        db.query(roleSQL, (err, rows) => {
-          if (err) {
-            console.log({ error: err.message });
-            return;
-          }
-          console.table([...rows]);
-          cliFunc();
-        });
+        roleView();
         break;
       case "View all employees":
-        const employeeSQL =
-          `SELECT employee.id, employee.first_name, employee.last_name, 
-          CONCAT(manager.first_name,' ',manager.last_name) AS manager, role.title, role.salary, department.department_name 
-          FROM employee 
-          JOIN role ON role.id = employee.role_id 
-          JOIN department ON department.id = role.department_id 
-          LEFT JOIN employee manager ON manager.id = employee.manager_id;`;
-        db.query(employeeSQL, (err, rows) => {
-          if (err) {
-            console.log({ error: err.message });
-            return;
-          }
-          console.table([...rows]);
-          cliFunc();
-        });
+        employeeView();
         break;
       case "Add a department":
         addDept();
@@ -242,6 +309,7 @@ const cliFunc = () => {
         addEmployee();
         break;
       case "Update an employee role":
+        updateEmployee();
         break;
       case "Exit":
         console.log("You may now close the application");
@@ -253,40 +321,5 @@ const cliFunc = () => {
   })
 }
 
-// View all roles
-app.get("/api/roles", (req, res) => {
-  const sql = `SELECT * FROM role`;
-
-  db.query(sql, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    console.log(rows);
-    res.json({
-      message: "success",
-      data: rows
-    });
-  });
-});
-
-
-// Add employee
-app.post('/api/new-employee', (req, res) => {
-  const sql = `INSERT INTO employee (id, first_name, last_name, manager_id, role_id)
-      VALUES (?)`;
-  const params = [req.id, req.title, req.salary, req.department_id];
-
-  db.query(sql, params, (err, result) => {
-    if (err) {
-      res.status(400).json({ error: err.message });
-      return;
-    };
-    res.json({
-      message: 'success',
-      data: req
-    });
-  });
-});
 
 cliFunc();
