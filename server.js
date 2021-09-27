@@ -96,8 +96,10 @@ const addDept = () => {
     }
   ]).then((data) => {
     const { department } = data;
+
     // Cleans the input to be put in the database
     const cleanDepartment = cleanedName(department);
+
     // SQL query to add the department to the database
     const addDepartmentSQL = `INSERT INTO department (department_name) VALUES (?);`
     db.query(addDepartmentSQL, cleanDepartment, (err, result) => {
@@ -111,6 +113,8 @@ const addDept = () => {
 
 // Function for adding a role to the database
 const addRole = () => {
+
+  // Gets the departments and puts them in an array to be used as choices in the prompt
   db.query(`SELECT * FROM department`, (err, rows) => {
     if (err) {
       console.log({ error: err.message });
@@ -159,6 +163,8 @@ const addRole = () => {
 
 // Function for adding an employee to the database
 const addEmployee = () => {
+
+  //Gets all employee information and joins the managers, as well as department and role tables
   db.query("SELECT employee.id, employee.first_name, employee.last_name, CONCAT(manager.first_name,' ',manager.last_name) AS manager, role.title, role.salary, department.department_name FROM employee JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id LEFT JOIN employee manager ON manager.id = employee.manager_id;",
     (err, rows) => {
       if (err) {
@@ -204,7 +210,7 @@ const addEmployee = () => {
 
         const roleId = roleArray.indexOf(role) + 1;
         const managerId = employeeArray.indexOf(manager) + 1;
-        
+
         const cleanFirst = cleanedName(firstName);
         const cleanLast = cleanedName(lastName);
 
@@ -289,6 +295,8 @@ const cliFunc = () => {
         ]
     }
   ]).then((choices) => {
+
+    // Depending on the selection the switch statements starts different functions
     switch (choices.choices) {
       case "View all departments":
         departmentView();
@@ -321,5 +329,5 @@ const cliFunc = () => {
   })
 }
 
-
+//Starts the application
 cliFunc();
