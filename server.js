@@ -20,14 +20,6 @@ const db = mysql.createConnection(
   console.log(`Connected to the cli_db database.`)
 );
 
-// Validates user input
-const customLetterValidation = (value) => {
-  const regex = /[a-z]/gi;
-  if (!regex.test(value)) {
-    return "Please use letters only"
-  };
-};
-
 
 //Cleans the user inputs
 const cleanedName = (name) => {
@@ -92,7 +84,6 @@ const addDept = () => {
       type: "input",
       name: "department",
       message: "Please enter the department to add",
-      validate: val => customLetterValidation(val),
     }
   ]).then((data) => {
     const { department } = data;
@@ -130,7 +121,6 @@ const addRole = () => {
         type: "input",
         name: "title",
         message: "Please enter the role to add",
-        validate: val => customLetterValidation(val),
       },
       {
         type: "number",
@@ -185,13 +175,11 @@ const addEmployee = () => {
           type: "input",
           name: "firstName",
           message: "Please enter the employee's first name",
-          validate: val => customLetterValidation(val),
         },
         {
           type: "input",
           name: "lastName",
           message: "Please enter the employee's last name",
-          validate: val => customLetterValidation(val),
         },
         {
           type: "list",
