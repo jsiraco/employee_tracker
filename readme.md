@@ -25,6 +25,11 @@ Fork repository
 
 ## Usage
 
+### Screenshot
+![employee_tracker_cli_screenshot](https://user-images.githubusercontent.com/83827081/134834732-269b4b56-fba7-4b41-9ae1-cc10bb413c53.png)
+
+### Video Link
+https://user-images.githubusercontent.com/83827081/134834889-d3f3a0b5-d52f-4714-855a-bc4ece9c3d47.mp4
 
 ## Questions
 ### GitHub
